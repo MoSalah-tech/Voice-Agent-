@@ -10,11 +10,14 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile   # or Dockerfile.pip
+      dockerfile: Dockerfile
     ports:
       - "8001:8000"
     env_file:
       - .env
+    environment:
+      # Override REDIS_URL to use the Docker service name
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - redis
     restart: unless-stopped

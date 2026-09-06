@@ -12,6 +12,7 @@ class LLMService:
             model=settings.llm_model,
             messages=messages,
             temperature=0.7,
-            max_tokens=300
+            max_tokens=1000,
+            stream=True
         )
         return response.choices[0].message.content
