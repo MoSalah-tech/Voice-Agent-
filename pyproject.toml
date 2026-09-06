@@ -4,4 +4,12 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "edge-tts>=6.1.9",
+    "fastapi>=0.115.0",
+    "groq>=0.6.0",
+    "pydantic-settings>=2.3.4",
+    "python-dotenv>=1.0.1",
+    "redis>=5.0.3",
+    "uvicorn[standard]>=0.30.1",
+]

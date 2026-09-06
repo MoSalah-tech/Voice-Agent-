@@ -1,0 +1,23 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile   # or Dockerfile.pip
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+volumes:
+  redis_data:
