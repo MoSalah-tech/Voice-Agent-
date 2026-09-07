@@ -23,7 +23,6 @@ export default function Home() {
   const analyserRef = useRef<AnalyserNode | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const isMountedRef = useRef(true);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRecordingRef = useRef(false);
@@ -78,18 +77,25 @@ export default function Home() {
       if (typeof event.data === 'string') {
         const data = JSON.parse(event.data);
         if (data.type === 'result') {
-          setMessages((prev) => [
+          setMessages(prev => [
             ...prev,
             { role: 'user', content: data.user_text },
             { role: 'assistant', content: data.assistant_text },
           ]);
           setIsProcessing(false);
+          // Automatically start listening after response
+          startListening();
+        } else if (data.type === 'cancelled') {
+          // Stop audio and prepare for new input
+          if (audioPlayerRef.current) {
+            audioPlayerRef.current.pause();
+            audioPlayerRef.current.currentTime = 0;
+          }
+          setIsProcessing(false);
+          setStatus('Listening...');
           startListening();
         } else if (data.type === 'error') {
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: `⚠️ ${data.detail}` },
-          ]);
+          setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${data.detail}` }]);
           setIsProcessing(false);
           startListening();
         }
@@ -99,7 +105,7 @@ export default function Home() {
         setAudioUrl(url);
         if (audioPlayerRef.current) {
           audioPlayerRef.current.src = url;
-          audioPlayerRef.current.play();
+          audioPlayerRef.current.play().catch(e => console.error('Play error', e));
         }
       }
     };
@@ -117,7 +123,12 @@ export default function Home() {
   }, [messages]);
 
   const startListening = async () => {
-    if (!isConnected || isProcessing || isRecordingRef.current) return;
+    if (!isConnected || isRecordingRef.current) return;
+    // Stop any ongoing audio playback
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -133,7 +144,7 @@ export default function Home() {
 
       const mediaRecorder = new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
+      const chunks: Blob[] = [];
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0 && wsRef.current?.readyState === WebSocket.OPEN) {
@@ -145,7 +156,7 @@ export default function Home() {
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: 'end' }));
         }
-        stream.getTracks().forEach((track) => track.stop());
+        stream.getTracks().forEach(track => track.stop());
         closeAudioContext();
         isRecordingRef.current = false;
         setIsRecording(false);
@@ -205,7 +216,7 @@ export default function Home() {
     if (mediaRecorderRef.current && isRecordingRef.current) {
       mediaRecorderRef.current.stop();
     }
-    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current?.getTracks().forEach(track => track.stop());
     closeAudioContext();
     isRecordingRef.current = false;
     setIsRecording(false);
@@ -255,7 +266,7 @@ export default function Home() {
         <div className="controls">
           <button
             onClick={startListening}
-            disabled={isRecording || !isConnected || isProcessing}
+            disabled={isRecording || !isConnected}
             className="btn start"
           >
             {isRecording ? 'Listening...' : 'Start Listening'}
