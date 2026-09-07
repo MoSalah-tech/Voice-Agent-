@@ -2,6 +2,7 @@ fastapi
 uvicorn
 groq
 edge-tts
+gTTS
 pydantic-settings
 python-dotenv
 websockets

@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     llm_model: str = "openai/gpt-oss-120b"
     stt_model: str = "whisper-large-v3"
     tts_voice: str = "en-US-AriaNeural"
+    tts_voice_arabic: str = "ar-EG-SalmaNeural"  # Egyptian Arabic voice
+    tts_voice_english: str = "en-US-AriaNeural"  # English voice
+
     log_level: str = "INFO"
     max_history_messages: int = 10
 

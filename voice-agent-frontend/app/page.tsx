@@ -74,41 +74,39 @@ export default function Home() {
     };
 
     ws.onmessage = (event) => {
-      if (typeof event.data === 'string') {
-        const data = JSON.parse(event.data);
-        if (data.type === 'result') {
-          setMessages(prev => [
-            ...prev,
-            { role: 'user', content: data.user_text },
-            { role: 'assistant', content: data.assistant_text },
-          ]);
-          setIsProcessing(false);
-          // Automatically start listening after response
-          startListening();
-        } else if (data.type === 'cancelled') {
-          // Stop audio and prepare for new input
-          if (audioPlayerRef.current) {
-            audioPlayerRef.current.pause();
-            audioPlayerRef.current.currentTime = 0;
-          }
-          setIsProcessing(false);
-          setStatus('Listening...');
-          startListening();
-        } else if (data.type === 'error') {
-          setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${data.detail}` }]);
-          setIsProcessing(false);
-          startListening();
-        }
-      } else if (event.data instanceof ArrayBuffer) {
-        const blob = new Blob([event.data], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        if (audioPlayerRef.current) {
-          audioPlayerRef.current.src = url;
-          audioPlayerRef.current.play().catch(e => console.error('Play error', e));
-        }
+  if (typeof event.data === 'string') {
+    const data = JSON.parse(event.data);
+    if (data.type === 'result') {
+      setMessages(prev => [
+        ...prev,
+        { role: 'user', content: data.user_text },
+        { role: 'assistant', content: data.assistant_text },
+      ]);
+      setIsProcessing(false);
+      startListening();
+    } else if (data.type === 'error') {
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${data.detail}` }]);
+      setIsProcessing(false);
+      startListening();
+    } else if (data.type === 'cancelled') {
+      // stop audio, reset
+      if (audioPlayerRef.current) {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.currentTime = 0;
       }
-    };
+      setIsProcessing(false);
+      startListening();
+    }
+  } else if (event.data instanceof ArrayBuffer) {
+    // single binary audio
+    const blob = new Blob([event.data], { type: 'audio/mpeg' });
+    const url = URL.createObjectURL(blob);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.src = url;
+      audioPlayerRef.current.play().catch(e => console.error('Play error', e));
+    }
+  }
+};
 
     return () => {
       isMountedRef.current = false;
