@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: 'Mo Salah Voice Agent',
-  description: 'AI voice assistant',
+  description: 'Mo Salah voice assistant Project',
 };
 
 

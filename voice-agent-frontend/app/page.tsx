@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001/ws/voice';
+// ...
+
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
