@@ -12,19 +12,13 @@ pipeline {
     stages {
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}")
-                }
+                sh "docker build -t ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Push to Registry') {
             steps {
-                script {
-                    docker.withRegistry("http://${REGISTRY}", '') {
-                        docker.image("${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}").push()
-                    }
-                }
+                sh "docker push ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
 
