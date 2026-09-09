@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        REGISTRY = 'localhost:5000'
+        IMAGE_NAME = 'voice-agent-frontend'
+        IMAGE_TAG = 'local'
+        KUBECONFIG_CREDENTIALS = 'kubeconfig'
+        DEPLOYMENT_NAME = 'frontend'
+        CONTAINER_NAME = 'frontend'
+        // Set WebSocket URL for production or local
+        NEXT_PUBLIC_WS_URL = 'ws://localhost:8001/ws/voice'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/MoSalah-tech/Voice-Agent-'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}", "--build-arg NEXT_PUBLIC_WS_URL=${NEXT_PUBLIC_WS_URL} .")
+                }
+            }
+        }
+
+        stage('Push to Registry') {
+            steps {
+                script {
+                    docker.withRegistry("http://${REGISTRY}", '') {
+                        docker.image("${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: KUBECONFIG_CREDENTIALS, variable: 'KUBECONFIG_FILE')]) {
+                    sh """
+                        export KUBECONFIG=$KUBECONFIG_FILE
+                        kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} --record
+                        kubectl rollout status deployment/${DEPLOYMENT_NAME}
+                    """
+                }
+            }
+        }
+    }
+}
