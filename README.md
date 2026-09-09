@@ -138,6 +138,85 @@ Adjust SILENCE_THRESHOLD and SILENCE_DURATION in frontend/app/page.tsx for diffe
 
 
 
+## 🌀 Local Kubernetes Deployment (Learning / Development)
 
-   
+### Prerequisites
+- Docker Desktop with Kubernetes enabled or Minikube installed.
+- kubectl configured to your cluster.
+- Backend and frontend images built locally (see steps below).
+- A .env file in the backend repo containing at least GROQ_API_KEY.
 
+### important |  The .env file must not be committed to GitHub. Ensure it is listed in .gitignore. 
+
+### 1. Build Docker Images
+Backend
+In the backend repo root:
+
+```bash
+  
+ docker build -t voice-agent-backend:local .
+
+```
+
+Frontend
+In the frontend repo root:
+
+```bash
+docker build -t voice-agent-frontend:local .
+
+```
+If using Docker Desktop Kubernetes, the images may not be visible to the cluster (causing ErrImageNeverPull). In that case, use a local registry:
+
+```bash
+docker run -d -p 5000:5000 --name registry registry:2
+docker tag voice-agent-backend:local localhost:5000/voice-agent-backend:local
+docker push localhost:5000/voice-agent-backend:local
+docker tag voice-agent-frontend:local localhost:5000/voice-agent-frontend:local
+docker push localhost:5000/voice-agent-frontend:local
+```
+Then update the image names in the manifest to localhost:5000/... with imagePullPolicy: Always.
+
+
+### 2. Create Kubernetes Secret
+Create a secret from your .env file (make sure there are no trailing spaces or quotes around values):
+
+```bash
+kubectl create secret generic voice-agent-secrets --from-env-file=.env
+```
+### 3. Apply Kubernetes Manifests
+
+Apply With the deployment.yaml file inside the k8s dir in the repo root:
+
+```bash
+kubectl apply -f k8s-deployment.yaml
+```
+
+### 4. Verify Pods Are Running
+```bash
+kubectl get pods
+```
+Wait until all pods show Running.
+
+
+
+### 5. Access the Application
+Open two terminals and run:
+
+Backend (port 8001 to match frontend default fallback ws://localhost:8001/ws/voice):
+
+```bash
+kubectl port-forward service/backend-service 8001:8000
+```
+
+Frontend:
+```bash
+kubectl port-forward service/frontend-service 8080:80
+```
+Now open http://localhost:8080 in your browser.
+
+### 6. Scaling (Optional)
+
+```bash
+kubectl scale deployment backend --replicas=3
+kubectl scale deployment frontend --replicas=3 
+```
