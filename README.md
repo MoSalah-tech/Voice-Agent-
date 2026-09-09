@@ -40,7 +40,8 @@ A full‑stack, real‑time conversational AI voice assistant. Users speak in En
 - `react-markdown` + `remark-gfm` for Markdown rendering
 
 **Infrastructure**
-- Docker, Docker Compose
+- Docker, Docker Compose ,Kubernetes
+- Jenkins CI/CD 
 - Railway (backend deployment)
 - Vercel (frontend deployment)
 
