@@ -15,13 +15,18 @@ spec:
     spec:
       containers:
       - name: jenkins
-        image: jenkins/jenkins:lts
+        image: jenkins-docker:local
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
         ports:
         - containerPort: 8080
         - containerPort: 50000
         volumeMounts:
         - name: jenkins-home
           mountPath: /var/jenkins_home
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
         resources:
           requests:
             memory: "512Mi"
@@ -33,3 +38,6 @@ spec:
       - name: jenkins-home
         persistentVolumeClaim:
           claimName: jenkins-pvc
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock

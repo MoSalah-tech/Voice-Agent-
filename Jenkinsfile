@@ -11,12 +11,6 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/MoSalah-tech/Voice-Agent-'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
                 script {
