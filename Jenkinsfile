@@ -25,7 +25,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 sh """
-                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} --record
+                    export KUBECONFIG=/var/jenkins_home/.kube/config
+                    kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                     kubectl rollout status deployment/${DEPLOYMENT_NAME}
                 """
             }
